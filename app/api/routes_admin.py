@@ -277,6 +277,9 @@ def _master_update(req: Request) -> Response:
         return json_response({"error": "bad_request", "message": "No updatable fields supplied"}, status=400)
     values.append(item_id)
     with db.transaction() as conn:
+        # Table, column and id names come only from the _update_target()/entity whitelist;
+        # values remain bound parameters, so this is not injectable input.
+        # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query, python.lang.security.audit.formatted-sql-query.formatted-sql-query
         conn.execute(f"UPDATE {table} SET {', '.join(updates)} WHERE {_id_column(entity)} = ?", values)
     return json_response({"ok": True, "id": item_id})
 

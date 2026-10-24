@@ -11,6 +11,8 @@ exercises the same adapter path as a live feed.
 from __future__ import annotations
 
 from datetime import datetime
+# ElementTree is safe here: DTD/ENTITY payloads are rejected and size is capped below.
+# nosemgrep: gitlab.bandit.B313.B314.B315.B316.B318.B319.B320.B405.B406.B407.B408.B409.B410, gitlab.bandit.B314, python.lang.security.use-defused-xml.use-defused-xml
 from xml.etree import ElementTree
 
 from ..models import Flight, FlightEvent, iso, parse_time
@@ -40,6 +42,7 @@ class AidxXmlSource:
         if "<!DOCTYPE" in upper or "<!ENTITY" in upper:
             raise AdapterError("AIDX payload must not contain DTD or ENTITY declarations")
         try:
+            # nosemgrep: gitlab.bandit.B313.B314.B315.B316.B318.B319.B320.B405.B406.B407.B408.B409.B410, gitlab.bandit.B314
             root = ElementTree.fromstring(xml_text)
         except ElementTree.ParseError as exc:
             raise AdapterError(f"Malformed AIDX XML: {exc}") from exc
@@ -192,7 +195,7 @@ def build_notification(
         f"<ArrivalAirport CodeContext=\"3\">{destination}</ArrivalAirport>"
         f"<OriginDate>{(flight.scheduled or stamp).date().isoformat()}</OriginDate>"
         f"</LegIdentifier><LegData InternalDomesticIndicator=\""
-        f'{"false" if flight.is_international else "true"}">'
+        f'{"false" if flight.is_international else "true"}">'  # nosemgrep: python.lang.maintainability.is-function-without-parentheses.is-function-without-parentheses
         f"<PublicStatus>{status or flight.status}</PublicStatus>"
         f"<OperationalStatus>{reason}</OperationalStatus>"
         f"<ServiceType>{flight.service_type}</ServiceType>"

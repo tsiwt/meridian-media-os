@@ -379,6 +379,8 @@ class Simulation:
                     )
                 elif event.field in {"estimated", "actual"}:
                     column = "etd" if flight["direction"] == "D" else "eta"
+                    # The column name is one of two constants chosen above; values are bound.
+                    # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
                     conn.execute(
                         f"UPDATE flights SET {column} = ?, updated = ? WHERE flight_id = ?",
                         (event.new_value, iso(now), event.flight_id),

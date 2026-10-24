@@ -193,7 +193,7 @@ function incidentRow(ctx, incident) {
         h("span", { class: `badge ${incident.severity === "high" || incident.severity === "critical" ? "red" : incident.severity === "medium" ? "amber" : "grey"}`, text: incident.severity }),
         h("span", { class: "list-title", text: incident.title })
       ),
-      h("div", { class: "list-sub", text: `${incident.kind.replaceAll("_", " ")} · ${incident.owner} · ${fmtTime(incident.createdAt)} UTC` })
+      h("div", { class: "list-sub", text: `${incident.kind.replace(/_/g, " ")} · ${incident.owner} · ${fmtTime(incident.createdAt)} UTC` })
     ),
     statusBadge(incident.status)
   );
@@ -266,7 +266,7 @@ function renderIncidents(ctx, root, data) {
         h("tr", {},
           h("td", {}, h("span", { class: `badge ${["high", "critical"].includes(incident.severity) ? "red" : incident.severity === "medium" ? "amber" : "grey"}`, text: incident.severity })),
           h("td", {}, h("div", { class: "strong", text: incident.title }), h("div", { class: "sub", text: incident.message })),
-          h("td", { class: "sub", text: titleCase(incident.kind.replaceAll("_", " ")) }),
+          h("td", { class: "sub", text: titleCase(incident.kind.replace(/_/g, " ")) }),
           h("td", { class: "sub", text: incident.owner }),
           h("td", { class: "mono tiny", text: fmtTime(incident.createdAt) }),
           h("td", {}, statusBadge(incident.status)),

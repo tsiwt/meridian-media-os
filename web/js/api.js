@@ -7,13 +7,24 @@ export class ApiError extends Error {
   }
 }
 
+function apiUrl(path) {
+  if (typeof path !== "string" || !path.startsWith("/api/")) {
+    throw new Error("Unsupported API path");
+  }
+  const url = new URL(path, location.origin);
+  if (url.origin !== location.origin) throw new Error("Cross-origin API request blocked");
+  return `${url.pathname}${url.search}`;
+}
+
 async function request(path, options = {}) {
   const init = { method: options.method || "GET", headers: { Accept: "application/json" } };
   if (options.body !== undefined) {
     init.headers["Content-Type"] = "application/json";
     init.body = JSON.stringify(options.body);
   }
-  const response = await fetch(path, init);
+  // Same-origin check above; path is constrained to /api/ by apiUrl().
+  // nosemgrep: gitlab.nodejs_scan.javascript-ssrf-rule-node_ssrf
+  const response = await fetch(apiUrl(path), init);
   const contentType = response.headers.get("Content-Type") || "";
   let payload = null;
   if (contentType.includes("application/json")) {

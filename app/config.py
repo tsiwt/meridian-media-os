@@ -53,6 +53,8 @@ def detect_lan_ip() -> str:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
             sock.connect(("10.255.255.255", 1))
             candidate = sock.getsockname()[0]
+        # ipaddress exposes is_loopback as a property, not a method.
+        # nosemgrep: python.lang.maintainability.is-function-without-parentheses.is-function-without-parentheses
         if candidate and not ipaddress.ip_address(candidate).is_loopback:
             return candidate
     except OSError:
@@ -60,6 +62,7 @@ def detect_lan_ip() -> str:
     try:
         for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
             candidate = info[4][0]
+            # nosemgrep: python.lang.maintainability.is-function-without-parentheses.is-function-without-parentheses
             if not ipaddress.ip_address(candidate).is_loopback:
                 return candidate
     except OSError:

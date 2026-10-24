@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from typing import Any
+# Only local-name helpers use ElementTree types; parsing happens in aidx.py after XXE checks.
+# nosemgrep: gitlab.bandit.B313.B314.B315.B316.B318.B319.B320.B405.B406.B407.B408.B409.B410, python.lang.security.use-defused-xml.use-defused-xml
 from xml.etree import ElementTree
 
 

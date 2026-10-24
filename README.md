@@ -234,6 +234,7 @@ The app sets `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Pe
 
 - [`docs/ADAPTERS.md`](docs/ADAPTERS.md) — adapter contract, field mappings, freshness/evidence, add-a-source guide.
 - [`docs/EVIDENCE.md`](docs/EVIDENCE.md) — requirement → code → test/demo matrix (Must/Should).
+- [`docs/SECURITY.md`](docs/SECURITY.md) — final OpenGrep/Trivy results, justified false-positive exclusions and manual misconfig checklist.
 - [`docs/architecture.svg`](docs/architecture.svg) — architecture diagram (standalone, no external assets).
 - [`samples/REFERENCE_DATA.md`](samples/REFERENCE_DATA.md) — synthetic AODB/AIDX/ACRIS reference notes.
 

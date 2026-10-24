@@ -17,7 +17,6 @@ export function h(tag, props, ...children) {
     } else if (key.startsWith("on") && typeof value === "function") {
       el.addEventListener(key.slice(2).toLowerCase(), value);
     } else if (key === "ref" && typeof value === "function") value(el);
-    else if (key === "html") el.innerHTML = value;
     else if (value === true) el.setAttribute(key, "");
     else el.setAttribute(key, String(value));
   }

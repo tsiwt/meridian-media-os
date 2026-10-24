@@ -118,6 +118,8 @@ def _clear() -> None:
     ]
     with db.transaction() as conn:
         for table in tables:
+            # `tables` is a closed static list declared above, never request input.
+            # nosemgrep: python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query, python.lang.security.audit.formatted-sql-query.formatted-sql-query
             conn.execute(f"DELETE FROM {table}")
 
 
