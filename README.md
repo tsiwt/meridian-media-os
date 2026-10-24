@@ -17,9 +17,11 @@ The POC is **offline-first, dependency-free and demo-ready**: a Python 3.11 stan
 
 ## Playground
 
-**Live demo:** <https://configuring-maker-clean-understanding.trycloudflare.com>
+**Live demo:** <https://meridian-media-os.onrender.com>
 
-The URL served the full Python backend at review time (health, SSE, decisions, claim QR and all role views). It is a Cloudflare tunnel to the same server started by `docker compose up --build`; the tunnel process is kept running for the review window. If the tunnel is recycled, run the Docker command below — the application is fully self-contained and does not depend on the tunnel or any paid service. Hugging Face Docker Spaces now require a PRO plan (free accounts receive HTTP 402), so the portable Docker image is the durable deployment path; the tunnel is the current public URL.
+The deployed Render web service runs the full Python backend: health, SSE, decisions, claim QR and all five role views. It is seeded on boot (900 flights, 180 screens, 25 campaigns) and uses an ephemeral SQLite file, so a redeploy resets the demo to the same deterministic initial state. Render's free instance spins down after inactivity; the first request after idle can take 30–60 seconds to wake, then the app is live.
+
+The identical image runs locally with `docker compose up --build` (see below). No paid hosting or API key is required.
 
 ## One-command start
 
