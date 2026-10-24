@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local database / generated fixtures
+data/*.db
+data/*.db-shm
+data/*.db-wal
+data/*.sqlite
+data/*.sqlite3
+data/aodb/
+data/aidx/
+data/acris/
+!data/.gitkeep
+
+# Logs and local artifacts
+*.log
+logs/
+screenshots/
+*.zip
+*.png
+*.jpg
+*.jpeg
+*.pdf
+
+# Secrets / local env
+.env
+.env.*
+!.env.example
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

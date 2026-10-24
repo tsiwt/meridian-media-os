@@ -1,0 +1,870 @@
+openapi: 3.0.3
+info:
+  title: Meridian Media OS API
+  version: 1.0.0
+  description: |
+    REST API for the Meridian Media OS airport retail media POC. All data is
+    fictional and synthetic. Roles are selected by the UI; there is no
+    authentication. Routes below are the implemented routes only. The live
+    server also serves the UI, `/architecture.svg`, `/openapi.yaml`,
+    `/claim/{code}` and `/report/{token}`. `GET /api/stream` is Server-Sent
+    Events, not JSON.
+servers:
+  - url: http://localhost:8000
+    description: docker compose (host port 8000)
+  - url: http://localhost:7860
+    description: direct python -m app.server
+tags:
+  - name: core
+  - name: retailer
+  - name: media
+  - name: airline
+  - name: admin
+  - name: passenger
+paths:
+  /api/stream:
+    get:
+      tags: [core]
+      summary: Server-Sent Events stream (sim, kpi, decision, incident, scan, redemption)
+      responses:
+        "200":
+          description: text/event-stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+  /api/config:
+    get:
+      tags: [core]
+      summary: Theme, roles, sources, counts, claim base and languages
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+  /api/health:
+    get:
+      tags: [core]
+      summary: Liveness/readiness, seed version, counts and feed health
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "503": { $ref: "#/components/responses/Json" }
+  /healthz:
+    get:
+      tags: [core]
+      summary: Alias of /api/health
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+  /api/meta:
+    get:
+      tags: [core]
+      summary: Seed metadata, source adapters, AI provider and audit pointers
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+  /api/sim:
+    get:
+      tags: [core]
+      summary: Current simulation state
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+  /api/sim/control:
+    post:
+      tags: [core]
+      summary: Control the simulation clock or inject an event
+      description: |
+        Body `{action, value}`. Actions: `play`, `pause`, `speed`, `jump`,
+        `reset`, `inject`, `stale-feed`. For `inject`, `value` is
+        `{kind: delay|gate-change|screen-offline|screen-online, ...}`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action: { type: string }
+                value: { nullable: true }
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+  /api/decisions/{id}:
+    get:
+      tags: [core]
+      summary: Public decision audit with profile, candidates, score and evidence
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "404": { $ref: "#/components/responses/Json" }
+  /api/claim/{code}:
+    get:
+      tags: [core]
+      summary: Promo details for the claim page
+      parameters:
+        - $ref: "#/components/parameters/Code"
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "404": { $ref: "#/components/responses/Json" }
+    post:
+      tags: [core]
+      summary: Claim a promo code
+      parameters:
+        - $ref: "#/components/parameters/Code"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                channel: { type: string, default: mobile }
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "409": { $ref: "#/components/responses/Json" }
+  /api/claim/{code}/scan:
+    post:
+      tags: [core]
+      summary: Record a QR scan
+      parameters:
+        - $ref: "#/components/parameters/Code"
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "404": { $ref: "#/components/responses/Json" }
+  /api/claim/{code}/share:
+    post:
+      tags: [core]
+      summary: Create a share-to-family child code
+      parameters:
+        - $ref: "#/components/parameters/Code"
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "409": { $ref: "#/components/responses/Json" }
+  /api/qr:
+    get:
+      tags: [core]
+      summary: Resolve the claim URL for a code
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "400": { $ref: "#/components/responses/Json" }
+  /api/qr.svg:
+    get:
+      tags: [core]
+      summary: Encode arbitrary data as a standalone SVG QR
+      parameters:
+        - name: data
+          in: query
+          schema: { type: string }
+        - name: url
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: SVG QR
+          content:
+            image/svg+xml:
+              schema: { type: string }
+        "400": { $ref: "#/components/responses/Json" }
+  /api/meta/readme:
+    get:
+      tags: [core]
+      summary: Serve the repository README as markdown
+      responses:
+        "200":
+          description: Markdown
+          content:
+            text/markdown:
+              schema: { type: string }
+        "404": { $ref: "#/components/responses/Json" }
+  /api/flights:
+    get:
+      tags: [core]
+      summary: Departures in the next 16 hours
+      parameters:
+        - name: q
+          in: query
+          description: Filter by display number, destination or gate
+          schema: { type: string }
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+
+  /api/retailer/companies:
+    get:
+      tags: [retailer]
+      summary: Retailer/brand companies
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+  /api/retailer/outlets:
+    get:
+      tags: [retailer]
+      summary: Outlets for an advertiser
+      parameters:
+        - $ref: "#/components/parameters/AdvertiserId"
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+  /api/retailer/dashboard:
+    get:
+      tags: [retailer]
+      summary: Live KPI, campaigns, segments, promos, redemptions and suggestions
+      parameters:
+        - $ref: "#/components/parameters/AdvertiserId"
+        - $ref: "#/components/parameters/OutletId"
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+  /api/retailer/flow:
+    get:
+      tags: [retailer]
+      summary: Passenger flow near the outlet for the next 2 hours
+      parameters:
+        - $ref: "#/components/parameters/AdvertiserId"
+        - $ref: "#/components/parameters/OutletId"
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+  /api/retailer/campaigns:
+    get:
+      tags: [retailer]
+      summary: Campaign history with spend, impressions, redemptions and ROI
+      parameters:
+        - $ref: "#/components/parameters/AdvertiserId"
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+    post:
+      tags: [retailer]
+      summary: Create a campaign
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CampaignInput" }
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "400": { $ref: "#/components/responses/Json" }
+  /api/retailer/campaigns/{id}/rerun:
+    post:
+      tags: [retailer]
+      summary: Re-run a past campaign
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "404": { $ref: "#/components/responses/Json" }
+  /api/retailer/campaigns/{id}/duplicate:
+    post:
+      tags: [retailer]
+      summary: Duplicate a campaign as a draft
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "404": { $ref: "#/components/responses/Json" }
+  /api/retailer/campaigns/preview:
+    post:
+      tags: [retailer]
+      summary: Preview audience match, impressions and redemptions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CampaignInput" }
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+  /api/retailer/creatives:
+    get:
+      tags: [retailer]
+      summary: Creative library
+      parameters:
+        - $ref: "#/components/parameters/AdvertiserId"
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+    post:
+      tags: [retailer]
+      summary: Create/upload a creative (enters approval queue)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                advertiserId: { type: string }
+                name: { type: string }
+                headlineEn: { type: string }
+                headlineZh: { type: string }
+                bodyEn: { type: string }
+                bodyZh: { type: string }
+                ctaEn: { type: string }
+                ctaZh: { type: string }
+                template: { type: string }
+                image: { type: string }
+                category: { type: string }
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "400": { $ref: "#/components/responses/Json" }
+  /api/retailer/creatives/generate:
+    post:
+      tags: [retailer]
+      summary: GenAI creative mock from a brief (EN + configured language)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                brief: { type: string }
+                language: { type: string, default: zh }
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "400": { $ref: "#/components/responses/Json" }
+  /api/retailer/promos:
+    get:
+      tags: [retailer]
+      summary: List promo codes
+      parameters:
+        - name: campaignId
+          in: query
+          schema: { type: string }
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+    post:
+      tags: [retailer]
+      summary: Create a time-boxed promo code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                campaignId: { type: string }
+                flightId: { type: string }
+                label: { type: string }
+                value: { type: string }
+                minutes: { type: integer, default: 30 }
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "400": { $ref: "#/components/responses/Json" }
+  /api/retailer/promos/{code}/share:
+    post:
+      tags: [retailer]
+      summary: Share a promo code with family (child code)
+      parameters:
+        - $ref: "#/components/parameters/Code"
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "409": { $ref: "#/components/responses/Json" }
+  /api/retailer/triggers:
+    get:
+      tags: [retailer]
+      summary: List trigger rules
+      parameters:
+        - $ref: "#/components/parameters/AdvertiserId"
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+    post:
+      tags: [retailer]
+      summary: Create/update a trigger rule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CampaignInput" }
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "400": { $ref: "#/components/responses/Json" }
+  /api/retailer/outlets/{id}/stock:
+    post:
+      tags: [retailer]
+      summary: Toggle outlet stock (pause stock-aware offers)
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status: { type: string, enum: [in_stock, out_of_stock] }
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "404": { $ref: "#/components/responses/Json" }
+  /api/retailer/recommendations:
+    get:
+      tags: [retailer]
+      summary: Best slots tomorrow with predicted impressions
+      parameters:
+        - $ref: "#/components/parameters/AdvertiserId"
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+
+  /api/media/inventory:
+    get:
+      tags: [media]
+      summary: Screen × hour inventory with booked/available/premium
+      parameters:
+        - name: date
+          in: query
+          schema: { type: string, format: date }
+        - name: screenId
+          in: query
+          schema: { type: string }
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+  /api/media/yield:
+    get:
+      tags: [media]
+      summary: Yield, occupancy and 7-day revenue forecast
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+  /api/media/approvals:
+    get:
+      tags: [media]
+      summary: Approval queue
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+    post:
+      tags: [media]
+      summary: Approve or reject a creative/campaign
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type: { type: string, enum: [campaign, creative] }
+                id: { type: string }
+                decision: { type: string, enum: [approve, reject] }
+                checklist: { type: object }
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "400": { $ref: "#/components/responses/Json" }
+  /api/media/advertisers:
+    get:
+      tags: [media]
+      summary: Advertiser spend ranking, campaigns and under-delivery flags
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+  /api/media/packages:
+    get:
+      tags: [media]
+      summary: Screen packages
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+    post:
+      tags: [media]
+      summary: Create a screen package
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                screenIds: { type: array, items: { type: string } }
+                price: { type: number }
+                description: { type: string }
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "400": { $ref: "#/components/responses/Json" }
+  /api/media/report:
+    get:
+      tags: [media]
+      summary: Advertiser report payload
+      parameters:
+        - $ref: "#/components/parameters/AdvertiserId"
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+  /api/media/report/share:
+    post:
+      tags: [media]
+      summary: Create a shareable advertiser report token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                advertiserId: { type: string }
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+  /api/media/report/{token}:
+    get:
+      tags: [media]
+      summary: Resolve a shared report token
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "404": { $ref: "#/components/responses/Json" }
+  /api/media/conflict:
+    get:
+      tags: [media]
+      summary: Why campaign A beat B on a screen
+      parameters:
+        - name: screenId
+          in: query
+          schema: { type: string, default: SCR-122 }
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+
+  /api/airline/companies:
+    get:
+      tags: [airline]
+      summary: Airline companies
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+  /api/airline/summary:
+    get:
+      tags: [airline]
+      summary: Airline KPI summary
+      parameters:
+        - $ref: "#/components/parameters/Airline"
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+  /api/airline/flights:
+    get:
+      tags: [airline]
+      summary: My flights today with gate, status, delay, load factor
+      parameters:
+        - $ref: "#/components/parameters/Airline"
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+  /api/airline/messages:
+    get:
+      tags: [airline]
+      summary: Gate-area sponsored messages
+      parameters:
+        - $ref: "#/components/parameters/Airline"
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+    post:
+      tags: [airline]
+      summary: Schedule gate-area messaging
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                airline: { type: string }
+                name: { type: string }
+                creativeId: { type: string }
+                gates: { type: array, items: { type: string } }
+                hours: { type: integer, default: 3 }
+                budget: { type: number }
+                dailyCap: { type: number }
+                freqCapMin: { type: integer }
+                bid: { type: number }
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "400": { $ref: "#/components/responses/Json" }
+  /api/airline/goodwill:
+    get:
+      tags: [airline]
+      summary: Delay goodwill settings and recent actions
+      parameters:
+        - $ref: "#/components/parameters/Airline"
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+    put:
+      tags: [airline]
+      summary: Update delay goodwill automation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                airline: { type: string }
+                enabled: { type: boolean }
+                thresholdMinutes: { type: integer }
+                offer: { type: string }
+                partner: { type: string }
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+  /api/airline/marketplace:
+    get:
+      tags: [airline]
+      summary: Co-marketing marketplace offers
+      parameters:
+        - $ref: "#/components/parameters/Airline"
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+  /api/airline/marketplace/{id}/accept:
+    post:
+      tags: [airline]
+      summary: Accept a co-marketing offer
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "404": { $ref: "#/components/responses/Json" }
+  /api/airline/performance:
+    get:
+      tags: [airline]
+      summary: Impressions/redemptions among the airline's passengers
+      parameters:
+        - $ref: "#/components/parameters/Airline"
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+
+  /api/admin/overview:
+    get:
+      tags: [admin]
+      summary: KPIs, zones, screens, presence, incidents, feeds, performance, decisions
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+  /api/admin/incidents:
+    get:
+      tags: [admin]
+      summary: Incident/bug tracker
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string }
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+    post:
+      tags: [admin]
+      summary: Create an incident
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                kind: { type: string }
+                severity: { type: string }
+                title: { type: string }
+                message: { type: string }
+                owner: { type: string }
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "400": { $ref: "#/components/responses/Json" }
+  /api/admin/incidents/{id}:
+    patch:
+      tags: [admin]
+      summary: Update incident status/owner/severity
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status: { type: string }
+                owner: { type: string }
+                severity: { type: string }
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "404": { $ref: "#/components/responses/Json" }
+  /api/admin/master/{entity}:
+    get:
+      tags: [admin]
+      summary: List master data (vendors, outlets, airlines, locations, screens)
+      parameters:
+        - $ref: "#/components/parameters/Entity"
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+    post:
+      tags: [admin]
+      summary: Create master data
+      parameters:
+        - $ref: "#/components/parameters/Entity"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "400": { $ref: "#/components/responses/Json" }
+  /api/admin/master/{entity}/{id}:
+    patch:
+      tags: [admin]
+      summary: Update master data
+      parameters:
+        - $ref: "#/components/parameters/Entity"
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "404": { $ref: "#/components/responses/Json" }
+  /api/admin/rules:
+    get:
+      tags: [admin]
+      summary: Rule engine settings
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+    put:
+      tags: [admin]
+      summary: Update rule engine settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+  /api/admin/decisions:
+    get:
+      tags: [admin]
+      summary: Searchable decision log
+      parameters:
+        - name: screenId
+          in: query
+          schema: { type: string }
+        - name: campaignId
+          in: query
+          schema: { type: string }
+        - name: q
+          in: query
+          schema: { type: string }
+        - name: fallback
+          in: query
+          schema: { type: string }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 30, maximum: 200 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+  /api/admin/decisions/{id}:
+    get:
+      tags: [admin]
+      summary: Decision detail with evidence trail
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "404": { $ref: "#/components/responses/Json" }
+  /api/admin/screens:
+    get:
+      tags: [admin]
+      summary: Screens with zone, status, latency and gate proximity
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+
+  /api/passenger/screens:
+    get:
+      tags: [passenger]
+      summary: Available passenger screens
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+  /api/passenger/screens/{id}:
+    get:
+      tags: [passenger]
+      summary: Screen decision, playlist, flights, profile, promo and claim URL
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "404": { $ref: "#/components/responses/Json" }
+  /api/passenger/screens/{id}/decide:
+    post:
+      tags: [passenger]
+      summary: Force a fresh decision for a screen
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "404": { $ref: "#/components/responses/Json" }
+  /api/passenger/why/{id}:
+    get:
+      tags: [passenger]
+      summary: Why-this-ad payload (profile, top candidates, winning rule)
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+        "404": { $ref: "#/components/responses/Json" }
+  /api/passenger/airport:
+    get:
+      tags: [passenger]
+      summary: Airport/terminal/zone/gate structure for the screen picker
+      responses:
+        "200": { $ref: "#/components/responses/Json" }
+
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+    Code:
+      name: code
+      in: path
+      required: true
+      schema: { type: string }
+    Entity:
+      name: entity
+      in: path
+      required: true
+      schema:
+        type: string
+        enum: [vendors, outlets, airlines, locations, screens]
+    AdvertiserId:
+      name: advertiserId
+      in: query
+      schema: { type: string, example: ADV-01 }
+    OutletId:
+      name: outletId
+      in: query
+      schema: { type: string }
+    Airline:
+      name: airline
+      in: query
+      schema: { type: string, example: ZO }
+  schemas:
+    CampaignInput:
+      type: object
+      properties:
+        advertiserId: { type: string }
+        name: { type: string }
+        creativeId: { type: string }
+        segments:
+          type: object
+          additionalProperties: { type: number }
+        filters:
+          type: object
+          additionalProperties: true
+        placement:
+          type: object
+          properties:
+            zones: { type: array, items: { type: string } }
+            gates: { type: array, items: { type: string } }
+            screens: { type: array, items: { type: string } }
+        triggers:
+          type: object
+          additionalProperties: true
+        daypart: { type: string }
+        budget: { type: number }
+        dailyCap: { type: number }
+        freqCapMin: { type: integer }
+        bid: { type: number }
+        priority: { type: integer }
+        notes: { type: string }
+  responses:
+    Json:
+      description: JSON payload (shape depends on the endpoint)
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - type: object
+              - type: array

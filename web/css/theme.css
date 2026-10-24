@@ -1,0 +1,115 @@
+:root {
+  color-scheme: dark;
+  --bg: #05080f;
+  --bg-soft: #08111e;
+  --panel: #0c1524;
+  --panel-2: #101c2f;
+  --panel-3: #15243b;
+  --line: rgba(147, 180, 214, 0.14);
+  --line-strong: rgba(147, 180, 214, 0.28);
+  --text: #eaf3ff;
+  --muted: #8ea4bf;
+  --muted-2: #6d829d;
+  --accent: #38e8c8;
+  --accent-2: #8b7bff;
+  --lime: #c9f45b;
+  --warn: #ffb454;
+  --danger: #ff647c;
+  --good: #49e39a;
+  --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  --radius: 18px;
+  --radius-sm: 11px;
+  --font: "Segoe UI Variable", "Segoe UI", Inter, system-ui, -apple-system, sans-serif;
+  --mono: "Cascadia Code", "SFMono-Regular", Consolas, ui-monospace, monospace;
+  --focus: 0 0 0 3px rgba(56, 232, 200, 0.32);
+}
+
+body[data-theme="light"] {
+  color-scheme: light;
+  --bg: #eef3fa;
+  --bg-soft: #e6edf7;
+  --panel: #ffffff;
+  --panel-2: #f5f8fd;
+  --panel-3: #eaf1fa;
+  --line: #dbe6f3;
+  --line-strong: #c5d6e9;
+  --text: #122036;
+  --muted: #5b7189;
+  --muted-2: #7b8ea5;
+  --accent: #0b9d8a;
+  --accent-2: #6757e8;
+  --lime: #6f9512;
+  --warn: #b96b00;
+  --danger: #d63b57;
+  --good: #138a5b;
+  --shadow: 0 18px 44px rgba(18, 32, 54, 0.08);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  background:
+    radial-gradient(900px 500px at 85% -10%, rgba(56, 232, 200, 0.10), transparent 60%),
+    radial-gradient(700px 500px at 8% 0%, rgba(139, 123, 255, 0.10), transparent 58%),
+    var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+body[data-theme="light"] {
+  background:
+    radial-gradient(900px 420px at 88% -10%, rgba(11, 157, 138, 0.10), transparent 60%),
+    radial-gradient(760px 420px at 4% 0%, rgba(103, 87, 232, 0.08), transparent 58%),
+    var(--bg);
+}
+h1, h2, h3, h4 { margin: 0; font-weight: 650; letter-spacing: -0.015em; }
+p { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+::selection { background: rgba(56, 232, 200, 0.25); }
+:focus-visible { outline: none; box-shadow: var(--focus); border-radius: 8px; }
+
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.tiny { font-size: 11px; letter-spacing: 0.04em; }
+.eyebrow {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.16em;
+  color: var(--muted-2); font-weight: 700;
+}
+.positive { color: var(--good); }
+.negative { color: var(--danger); }
+.warn-text { color: var(--warn); }
+.nowrap { white-space: nowrap; }
+.hidden { display: none !important; }
+
+.skip-link {
+  position: absolute; left: -999px; top: 10px; background: var(--accent);
+  color: #04120f; padding: 8px 14px; border-radius: 8px; z-index: 100;
+}
+.skip-link:focus { left: 10px; }
+
+.boot {
+  position: fixed; inset: 0; display: grid; place-content: center; justify-items: center;
+  gap: 14px; background: var(--bg); z-index: 200;
+}
+.boot-mark {
+  width: 64px; height: 64px; border-radius: 18px; display: grid; place-items: center;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #04120f;
+  font-size: 30px; font-weight: 800; box-shadow: 0 0 60px rgba(56, 232, 200, 0.35);
+}
+.boot-text { letter-spacing: 0.22em; text-transform: uppercase; font-size: 11px; color: var(--muted); }
+.boot-bar { width: 180px; height: 3px; background: var(--panel-3); border-radius: 4px; overflow: hidden; }
+.boot-bar span { display: block; width: 40%; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); animation: boot 1.2s infinite; }
+@keyframes boot { 0% { transform: translateX(-110%); } 100% { transform: translateX(260%); } }
+
+body[data-theme="light"] .glow-text { color: var(--accent); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}
+[hidden] { display: none !important; }
+

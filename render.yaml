@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: meridian-media-os
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: DB_PATH
+        value: /tmp/meridian.db
+      - key: SEED_ON_BOOT
+        value: "1"
+      - key: SIM_START
+        value: "2026-10-24T13:55:00Z"
+      - key: SIM_SPEED
+        value: "1"
+      - key: SIM_AUTOPLAY
+        value: "1"
+      - key: SECOND_LANGUAGE
+        value: zh
+      - key: AI_PROVIDER
+        value: mock
+      - key: FLIGHT_SOURCE
+        value: mock-aodb
+      - key: AIDX_SOURCE
+        value: mock-aidx
+      - key: ACRIS_SOURCE
+        value: mock-acris
