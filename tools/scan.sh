@@ -2,7 +2,7 @@
 # Scan a clean extraction of the submission zip.
 # Usage: tools/scan.sh /path/to/extracted/meridian-media-os
 # Requires: /home/shirong/bin/opengrep and /home/shirong/bin/trivy (WSL).
-set -euo pipefail
+set -eu
 STAGE="${1:-.}"
 OPENGREP="${OPENGREP:-/home/shirong/bin/opengrep}"
 TRIVY="${TRIVY:-/home/shirong/bin/trivy}"
@@ -39,10 +39,10 @@ for rule in "${EXCLUDES[@]}"; do ARGS+=("--exclude-rule=${rule}"); done
 "$OPENGREP" --config=r/all "${ARGS[@]}" --json "$STAGE" > /tmp/opengrep.json 2>/tmp/opengrep.err || true
 echo "OpenGrep JSON: $(wc -c < /tmp/opengrep.json) bytes"
 
-# Misconfig scanner hangs on this WSL installation; the three scanners below do
-# not need the policy engine. Docker-specific controls are checked manually.
-"$TRIVY" fs --skip-db-update --skip-version-check --no-progress --timeout 2m \
-  --scanners vuln,secret,license --format json "$STAGE" > /tmp/trivy.json 2>/tmp/trivy.err || true
+# --skip-check-update keeps the misconfig engine fully offline; without it Trivy
+# waits on the trivy-checks OCI download when the network is restricted.
+"$TRIVY" fs --skip-db-update --skip-check-update --skip-version-check --no-progress --timeout 2m \
+  --scanners vuln,secret,misconfig,license --format json "$STAGE" > /tmp/trivy.json 2>/tmp/trivy.err || true
 echo "Trivy JSON: $(wc -c < /tmp/trivy.json) bytes"
 
 python3 - "$STAGE" <<'PY'
@@ -59,15 +59,16 @@ for r in results:
     print(" ", r.get("extra", {}).get("severity"), r.get("check_id"), r.get("path"), r.get("start", {}).get("line"))
 
 trivy = json.load(open("/tmp/trivy.json"))
-totals = {"vulns": 0, "secrets": 0, "licenses": 0}
+totals = {"vulns": 0, "secrets": 0, "misconfigs": 0, "licenses": 0}
 for section in trivy.get("Results", []):
     totals["vulns"] += len(section.get("Vulnerabilities") or [])
     totals["secrets"] += len(section.get("Secrets") or [])
+    totals["misconfigs"] += len(section.get("Misconfigurations") or [])
     totals["licenses"] += len(section.get("Licenses") or [])
 print("trivy:", totals)
 errors = counts.get("ERROR", 0)
 warnings = counts.get("WARNING", 0)
 if errors or warnings or any(totals.values()):
     sys.exit(1)
-print("PASS: 0 ERROR / 0 WARNING / 0 vulns / 0 secrets / 0 licenses")
+print("PASS: 0 ERROR / 0 WARNING / 0 vulns / 0 secrets / 0 misconfigs / 0 licenses")
 PY

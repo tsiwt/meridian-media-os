@@ -11,11 +11,19 @@ directory (not the working tree). Commands are in `tools/scan.sh`.
 | Vulnerabilities | Trivy 0.76.0, `vuln` | **0** |
 | Secrets | Trivy 0.76.0, `secret` | **0** |
 | Licences | Trivy 0.76.0, `license` | **0** (no third-party runtime packages) |
-| Misconfiguration | Trivy 0.76.0, `misconfig` | Scanner hangs in this WSL installation; manual checklist below |
+| Misconfiguration | Trivy 0.76.0, `misconfig` | **0** (cached checks + `--skip-check-update`) |
 
 The 5 INFO findings are non-failing: the base image tag is not pinned by digest
 (no Docker daemon available to resolve one), the generic AI-provider rule, and
 three test asserts in `tools/make_zip.py`. No ERROR or WARNING remains.
+
+Trivy initially appeared to hang because this WSL shell has no proxy route to
+`mirror.gcr.io` and the misconfig engine waits on the checks OCI download with
+no short timeout. `tools/scan.sh` uses the existing vulnerability DB cache and
+`--skip-check-update`, which loads the cached checks and completes in seconds.
+With unrestricted network the original historical command
+`trivy fs --timeout 10m --scanners vuln,secret,misconfig,license --format json .`
+works unchanged.
 
 ## Real issues found and fixed
 
