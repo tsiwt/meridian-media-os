@@ -158,7 +158,7 @@ function renderOverview(ctx, root, data) {
       miniStat("API p99", `${performance.p99Ms} ms`),
       miniStat("Playlist build", `${performance.playlistBuildMs} ms`),
       miniStat("Decision interval", `${performance.decisionInterval}s sim`),
-      miniStat("Uptime 7d", `${performance.uptimePct7d}%`)
+      miniStat("Uptime 7d (sim)", `${performance.uptimePct7d}%`)
     ),
     h("div", { class: "divider" }),
     h("div", { class: "eyebrow", text: "Recent API latency" }),
@@ -252,7 +252,7 @@ function renderIncidents(ctx, root, data) {
   root.appendChild(h("div", { class: "section-head" },
     h("div", {},
       h("h2", { text: "Incident & bug tracker" }),
-      h("p", { class: "hint", text: "Auto-raised from screen heartbeats, feed lag, creative failures and budget pacing. Owners and status can be changed inline." })
+      h("p", { class: "hint", text: "Auto-raised from screen heartbeats, feed lag and creative failures. Owners and status can be changed inline." })
     ),
     h("button", { class: "btn primary small", onClick: () => incidentForm(ctx) }, icon("plus", 12), " New incident")
   ));
@@ -438,6 +438,14 @@ async function masterForm(ctx, entity, row) {
                 Object.assign(payload, { name: raw.name, category: raw.category, zone_id: raw.zoneId });
               } else if (entity === "screens") {
                 Object.assign(payload, { name: raw.name, status: raw.status, zone_id: raw.zoneId, aspect: raw.aspect });
+              } else if (entity === "locations") {
+                Object.assign(payload, {
+                  name: raw.name,
+                  terminal_id: raw.terminalId,
+                  kind: raw.zoneKind,
+                  concourse: raw.concourse,
+                  gates_json: String(raw.gates || "").split(",").map((item) => item.trim()).filter(Boolean),
+                });
               } else {
                 for (const [key, value] of Object.entries(raw)) payload[key] = value;
               }

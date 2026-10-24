@@ -96,8 +96,11 @@ def evaluate(
         bid_norm = min(1.0, float(campaign.get("bid") or 0) / 5.0)
         priority_norm = min(1.0, float(campaign.get("priority") or 0) / 2.0)
         ai_score = 0.72 * match + 0.14 * context_fit + 0.08 * bid_norm + 0.06 * priority_norm
-        final = min(1.0, ai_score * boost)
+        learning = _learning(campaign, profile.shares)
+        final = min(1.0, ai_score * boost + learning)
         reasons = [f"Audience match {round(match * 100)}%"] + boost_reasons
+        if learning:
+            reasons.append(f"Segment learning +{learning:.3f} conversion boost")
         if not passed:
             reasons.append(reason)
         candidates.append(
@@ -202,9 +205,9 @@ def _boost(
     hit = False
     delay_trigger = int(triggers.get("delayOver") or 0)
     if delay_trigger and profile.delay_minutes >= delay_trigger:
-        boost *= 1.4
+        boost *= 1.5
         hit = True
-        reasons.append(f"Delay {profile.delay_minutes} min ≥ {delay_trigger} min trigger ×1.4")
+        reasons.append(f"Delay {profile.delay_minutes} min ≥ {delay_trigger} min trigger ×1.5")
     if triggers.get("gateChange") and context.get("gate_change"):
         boost *= 1.15
         hit = True
@@ -270,5 +273,6 @@ def audit_score(candidate: Candidate, campaign: dict[str, Any], profile: CrowdPr
     context_fit = 1.0 if trigger_hit else (0.72 if campaign.get("priority", 0) >= 2 else 0.5)
     bid_norm = min(1.0, float(campaign.get("bid") or 0) / 5.0)
     priority_norm = min(1.0, float(campaign.get("priority") or 0) / 2.0)
+    learning = _learning(campaign, profile.shares)
     ai_score = 0.72 * match + 0.14 * context_fit + 0.08 * bid_norm + 0.06 * priority_norm
-    return round(min(1.0, ai_score * boost), 6)
+    return round(min(1.0, ai_score * boost + learning), 6)

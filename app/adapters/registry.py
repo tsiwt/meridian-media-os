@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from ..config import ROOT, Settings
 from .acris import AcrisJsonSource
 from .aidx import AidxXmlSource

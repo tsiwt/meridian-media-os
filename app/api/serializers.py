@@ -8,10 +8,6 @@ from .. import db
 from ..models import parse_time
 
 
-def load_json(row: Any, key: str, default: Any) -> Any:
-    return db.json_loads(row[key] if key in row.keys() else None, default)
-
-
 def screen(row: Any) -> dict[str, Any]:
     item = dict(row)
     item["nearestGates"] = db.json_loads(item.pop("nearest_gates_json", "[]"), [])

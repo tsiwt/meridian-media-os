@@ -19,9 +19,7 @@ from .api import router
 from .api.http import Request
 from .api.metrics import metrics
 from .config import ROOT, settings
-from .domain.promos import get_by_code
 from .domain.sim import Simulation
-from .models import iso
 from .seed import seed_all
 
 WEB = ROOT / "web"

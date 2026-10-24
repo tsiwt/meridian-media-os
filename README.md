@@ -49,6 +49,8 @@ python -m app.seed --reset
 
 Python **3.11+** is the only prerequisite. There are no `pip install` steps; the backend uses only the standard library.
 
+**Why this stack:** Python 3.11 and SQLite are mature, widely used, actively maintained open-source components; vanilla ES modules run in every modern browser without a build tool. The zero-runtime-dependency choice is deliberate: it keeps the attack surface and scanner findings near zero, makes the POC runnable offline on a clean laptop, and lets reviewers audit every line. Separate `web/` and `app/` trees keep frontend/backend boundaries explicit, while the adapter layer isolates AODB/AIDX/ACRIS from business logic.
+
 ## Architecture
 
 ![Architecture](docs/architecture.svg)
@@ -94,7 +96,7 @@ Audit any decision from the Admin decision log or `GET /api/decisions/{id}`. The
 - Master data list + create/edit for vendors/retailers, outlets/F&B, airlines, locations (terminal/zone/gate) and screens.
 - Editable global rules (segment weights, exploration, frequency cap, competitor separation, minimum confidence).
 - Searchable decision log with per-decision evidence audit.
-- Feed health (AODB/AIDX/ACRIS adapter, mode, configured, last message) and performance panel (API p95, playlist build, uptime).
+- Feed health (AODB/AIDX/ACRIS adapter, mode, configured, last message) and performance panel (API p95, playlist build, simulated 7-day uptime baseline).
 
 ### Retailer — shop or F&B outlet
 - Live dashboard: impressions, scans, redemptions, conversion, attributed revenue, active campaigns and live promos.
@@ -103,7 +105,7 @@ Audit any decision from the Admin decision log or `GET /api/decisions/{id}`. The
 - Creative library: reuse/duplicate, upload or generate an on-brand page; pending brand-safety approval.
 - Time-boxed promo codes and QR that expire with the linked flight's boarding; share-to-family creates a second code.
 - Campaign history with spend, impressions, redemptions, ROI and one-click re-run.
-- Trigger rules (delay/gate change/boarding/festival), stock-aware pause toggle, budget pacing and A/B groups; segment recommendations.
+- Trigger rules (delay/gate change/boarding/festival), outlet stock toggle, budget pacing and A/B groups; segment recommendations. Campaign-level stock pause is a documented Should-gap.
 
 ### Media Manager — ad sales and inventory
 - Inventory calendar: screens × hours, booked/available/premium (high predicted footfall).
@@ -130,7 +132,7 @@ Audit any decision from the Admin decision log or `GET /api/decisions/{id}`. The
 
 Start at **http://localhost:8000** with the simulation running at 1× (jump to ~14:10 if needed).
 
-1. **Gate 42 / DXB delay (0–15 s).** Open **Passenger Screen**, choose **T2-F → Gates 40–48 → Gate 42** (`SCR-122`). The context strip shows **ZO501 to DXB, 240 pax, delayed 45 min** next to **YU88 to SCJ**. In the simulation bar use **Inject → delay** for `ZO501` at Gate 42 (or 45 min).
+1. **Gate 42 / DXB delay (0–15 s).** Open **Passenger Screen**, choose **T2-F → Gates 40–48 → Gate 42** (`SCR-122`). The context strip shows **ZO501 to DXB, 240 pax, delayed 45 min** next to **YU88 to SCJ**. In the simulation bar use **Inject → delay** pick the `ZO501` row in the flight picker (the label is the flight number; internal ids are numeric) and set 45 min.
 2. **Cause and effect (15–30 s).** Switch to **Airline → Solano Airways**: ZO501 is delayed; gate-area messaging and the goodwill automation react. Switch to **Retailer → Meridian Duty Free (ADV-01)**: the delay trigger re-scores the DXB/Gulf offers and the zone crowd rises.
 3. **Passenger claim (30–45 s).** Back on the passenger screen, the live promo QR (e.g. `MQI-SKY35` / `MQI-GOLD15`) has a countdown. Scan it with a phone on the same LAN; the mobile claim page opens and the claim is recorded.
 4. **Money appears (45–60 s).** The Retailer dashboard ticks up scans/redemptions/revenue immediately (SSE), and the campaign history/ROI updates. Open **“Why this ad?”** to show the crowd profile, top-3 candidates and the winning evidence-backed rule.
@@ -170,7 +172,7 @@ Every value is an environment variable; see `.env.example`.
 | `ACRIS_SOURCE` | `mock-acris` | `mock-acris` or `live-acris` |
 | `AI_PROVIDER` / `AI_MODEL` | `mock` / `mock-evidence-v1` | Pluggable AI provider |
 | `PUBLIC_BASE_URL` | empty | Public origin for QR claim links |
-| `PRODUCT_NAME`, `PRODUCT_SHORT`, `AIRPORT_CODE`, `AIRPORT_NAME` | Meridian values | White-label identity |
+| `PRODUCT_NAME`, `PRODUCT_SHORT`, `PRODUCT_LOGO`, `AIRPORT_CODE`, `AIRPORT_NAME` | Meridian values | White-label identity, logo glyph |
 | `CURRENCY` / `LOCALE` / `SECOND_LANGUAGE` | `EUR` / `en` / `zh` | Money and i18n |
 | `MAX_HISTORY_DAYS` | `30` | Seeded history depth |
 | `LOG_LEVEL` | `INFO` | Server logging |

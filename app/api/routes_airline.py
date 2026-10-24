@@ -6,10 +6,11 @@ from datetime import datetime, timedelta
 
 from .. import db
 from ..domain import goodwill
+from ..domain.presence import aggregate
 from ..domain.promos import create as create_promo
-from ..models import iso, parse_time
+from ..models import iso
 from . import serializers
-from .http import Request, Response, Route, body_bool, body_int, body_str, dispatch, json_response, q_str
+from .http import Request, Response, Route, body_int, body_str, dispatch, json_response, q_str
 
 DEFAULT_AIRLINE = "ZO"
 CREATIVE_BY_AIRLINE = {"XH": "CRE-19", "ZO": "CRE-20", "YU": "CRE-21", "XD": "CRE-22"}
@@ -83,6 +84,15 @@ def _summary(req: Request) -> Response:
         "JOIN creatives cr ON cr.id=c.creative_id WHERE c.id IN (" + (placeholders) + ") ORDER BY c.id",
         tuple(campaign_ids),
     ) if campaign_ids else []
+    raw_flights = []
+    for row in db.query(
+        "SELECT * FROM flights WHERE airline=? AND direction='D' AND std BETWEEN ? AND ?",
+        (code, iso(now - timedelta(hours=2)), iso(now + timedelta(hours=12))),
+    ):
+        item = dict(row)
+        item["_profile"] = db.json_loads(row["profile_json"], {})
+        raw_flights.append(item)
+    crowd = aggregate(raw_flights, now)
     return json_response(
         {
             "airline": serializers.airline(airline),
@@ -97,6 +107,15 @@ def _summary(req: Request) -> Response:
             },
             "flights": flights[:12],
             "campaigns": [serializers.campaign(row) for row in campaigns],
+            "crowdProfile": {
+                "crowd": crowd["crowd"],
+                "shares": crowd["shares"],
+                "topDestinations": crowd["destinations"],
+                "nationalities": crowd["nationalities"],
+                "languages": crowd["languages"],
+                "medianDwellMinutes": crowd["medianDwell"],
+                "flights": len(crowd["flights"]),
+            },
             "goodwill": {
                 "settings": goodwill.settings_for(code),
                 "recent": goodwill.recent(code),

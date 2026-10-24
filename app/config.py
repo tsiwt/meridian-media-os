@@ -79,6 +79,7 @@ class Settings:
     )
     product_name: str = field(default_factory=lambda: _env("PRODUCT_NAME", "Meridian Media OS"))
     product_short: str = field(default_factory=lambda: _env("PRODUCT_SHORT", "MMOS"))
+    product_logo: str = field(default_factory=lambda: _env("PRODUCT_LOGO", "M"))
     airport_code: str = field(default_factory=lambda: _env("AIRPORT_CODE", "MQI"))
     airport_name: str = field(
         default_factory=lambda: _env("AIRPORT_NAME", "Meridian International Airport")
@@ -101,9 +102,7 @@ class Settings:
     public_base_url: str = field(default_factory=lambda: _env("PUBLIC_BASE_URL", ""))
     lan_ip: str = field(default_factory=detect_lan_ip)
     decision_interval_sim_seconds: int = field(
-        default_factory=lambda: _env_int(
-            "DECISION_INTERVAL", 120 if (_env("RENDER", "") or _env("RENDER_EXTERNAL_HOSTNAME", "") or _env("RENDER_EXTERNAL_URL", "")) else 15
-        )
+        default_factory=lambda: _env_int("DECISION_INTERVAL", 15)
     )
     presence_window_minutes: int = field(default_factory=lambda: _env_int("PRESENCE_WINDOW", 30))
     feed_fresh_seconds: int = field(default_factory=lambda: _env_int("FEED_FRESH_SECONDS", 180))
@@ -118,6 +117,7 @@ class Settings:
         return {
             "productName": self.product_name,
             "productShort": self.product_short,
+            "logo": self.product_logo,
             "airportCode": self.airport_code,
             "airportName": self.airport_name,
             "currency": self.currency,

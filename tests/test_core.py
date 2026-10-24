@@ -7,7 +7,7 @@ import random
 import sys
 import tempfile
 import unittest
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -20,7 +20,8 @@ from app import db  # noqa: E402
 from app.adapters.acris import AcrisJsonSource, build_entities  # noqa: E402
 from app.adapters.aidx import AidxXmlSource, build_notification  # noqa: E402
 from app.adapters.aodb import AodbCsvSource  # noqa: E402
-from app.api.http import match_route  # noqa: E402
+from app.api import routes_admin, routes_airline, routes_core  # noqa: E402
+from app.api.http import Request, match_route  # noqa: E402
 from app.config import settings  # noqa: E402
 from app.domain import decisions, promos  # noqa: E402
 from app.domain.profile import build_profile, screen_context  # noqa: E402
@@ -130,6 +131,54 @@ class DecisionTests(unittest.TestCase):
         self.assertTrue(decision.fallback)
         self.assertEqual(decision.validation["executed"], "rule_default")
         db.set_meta("feed_last_aodb", iso(self.sim.now))
+
+    def test_segment_learning_is_wired_into_scores(self):
+        decision = decisions.decide("SCR-122", self.sim.now, settings, persist=False)
+        reasons = [reason for candidate in decision.candidates for reason in candidate.reasons]
+        self.assertTrue(any("Segment learning" in reason for reason in reasons))
+
+
+class RouteBehaviorTests(unittest.TestCase):
+    def test_unknown_flight_injection_returns_400(self):
+        sim = Simulation(settings, autostart=False)
+        request = Request(
+            method="POST",
+            path="/api/sim/control",
+            query={},
+            body={"action": "inject", "value": {"kind": "delay", "flightId": "NOPE999"}},
+            headers={},
+            settings=settings,
+            sim=sim,
+        )
+        response = routes_core._sim_control(request)
+        self.assertEqual(response.status, 400)
+
+    def test_airline_summary_has_own_flight_profile(self):
+        sim = Simulation(settings, autostart=False)
+        request = Request(
+            method="GET", path="/api/airline/summary", query={"airline": "ZO"},
+            body={}, headers={}, settings=settings, sim=sim,
+        )
+        response = routes_airline._summary(request)
+        self.assertEqual(response.status, 200)
+        self.assertGreater(response.body["crowdProfile"]["crowd"], 0)
+        self.assertTrue(response.body["crowdProfile"]["shares"])
+
+    def test_locations_have_an_update_target(self):
+        table, fields = routes_admin._update_target("locations")
+        self.assertEqual(table, "zones")
+        self.assertIn("gates_json", fields)
+
+    def test_feed_lag_raises_an_incident(self):
+        sim = Simulation(settings, autostart=False)
+        sim._feed_stale = True
+        db.set_meta("feed_last_aodb", iso(sim.now - timedelta(minutes=10)))
+        sim._check_incidents(sim.now)
+        row = db.query_one("SELECT id FROM incidents WHERE kind='feed_lag' AND status != 'resolved'")
+        self.assertIsNotNone(row)
+        db.execute("DELETE FROM incidents WHERE kind='feed_lag'")
+        sim._feed_stale = False
+        db.set_meta("feed_last_aodb", iso(sim.now))
 
 
 class PromoTests(unittest.TestCase):

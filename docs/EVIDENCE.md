@@ -36,7 +36,7 @@ Legend: **Code** = implementation; **Check** = command/API/demo that demonstrate
 | B3 | Incident/bug tracker with severity/owner/status | Must | `routes_admin.py::_incidents`, `/api/admin/incidents`; `_check_incidents` | Inject screen offline; Admin incident list; PATCH status |
 | B4 | Master data list + create/edit (vendors, outlets, airlines, locations, screens) | Must | `routes_admin.py::_master`, `_master_create`, `_master_update` | `GET/POST/PATCH /api/admin/master/{entity}` |
 | B5 | Feed health: AODB/AIDX/ACRIS, adapter, last message, configured | Should | `adapters/registry.py::feed_health`, `routes_core.py::_health` | `GET /api/health` → `feeds`; Admin feed panel |
-| B6 | Performance: API p95, playlist build, uptime | Should | `app/api/metrics.py`, `routes_admin.py::_overview` (`performance`) | `GET /api/admin/overview` → `performance` |
+| B6 | Performance: API p95, playlist build, 7-day uptime baseline | Should (simulated uptime) | `app/api/metrics.py`, `routes_admin.py::_overview` (`performance`) | `GET /api/admin/overview` → `performance` |
 | B7 | Rule engine settings + versioned segment model | Must | `routes_admin.py::_rules`, `rules` table, `GET /api/meta` | `GET/PUT /api/admin/rules`; Admin rules tab |
 | B8 | Searchable decision log + audit | Must | `routes_admin.py::_decisions`, `_decision_detail`, `routes_core.py::_decision_audit` | `GET /api/admin/decisions?q=...`; open a decision |
 
@@ -51,7 +51,7 @@ Legend: **Code** = implementation; **Check** = command/API/demo that demonstrate
 | C5 | Time-boxed promo codes, QR, expiry with flight, share-to-family | Must | `domain/promos.py`, `app/qr.py`, `routes_core.py::_claim_*` | Passenger QR → phone claim; share creates second code |
 | C6 | Campaign history with spend, impressions, redemptions, ROI, run again | Must | `routes_retailer.py::_campaigns`, `_campaign_copy` | Retailer history table; Run again |
 | C7 | Trigger rules, e.g. DXB delay > 30 min → 15% off Gate 40–45 | Should | `routes_retailer.py::_triggers`; `domain/scoring.py::_boost` | Retailer trigger tab; inject ZO501 delay |
-| C8 | Stock-aware pause (mock toggle) | Should | `routes_retailer.py::_stock` | `POST /api/retailer/outlets/{id}/stock`; stock badge |
+| C8 | Stock-aware pause (mock toggle) | Should (partial) | outlet stock toggle in `routes_retailer.py::_stock`; campaign-level pause not wired | `POST /api/retailer/outlets/{id}/stock`; documented gap |
 | C9 | Budget pacing + simple A/B creative comparison | Should | `campaigns.ab_group`, spend/daily cap in `scoring.py`; `web/js/views/retailer.js` | Campaign table A/B group and spend |
 | C10 | Live audience-match preview + segment performance + suggestions | Must | `_preview`, `_recommendations`, `segment_stats` | Builder match estimate; dashboard suggestion card |
 | C11 | GenAI creative assistant offline, EN + second language | Must | `routes_retailer.py::_generate_creative`, `domain/ai.py::creative` | Creative library → GenAI assistant |
@@ -77,6 +77,7 @@ Legend: **Code** = implementation; **Check** = command/API/demo that demonstrate
 | E3 | Delay goodwill automation with F&B co-funding | Must | `domain/goodwill.py`, `sim._inject_delay`; `routes_airline.py::_goodwill` | Inject ZO501 delay 45 min; Airline → Goodwill |
 | E4 | Co-marketing marketplace, one-click accept | Should | `routes_airline.py::_marketplace` | `POST /api/airline/marketplace/{id}/accept` |
 | E5 | Performance among own passengers | Should | `routes_airline.py::_performance` | `GET /api/airline/performance?airline=ZO` |
+| E6 | Aggregated crowd profile of own flights | Must | `routes_airline.py::_summary` (`crowdProfile`), `presence.aggregate` | Airline Overview → Own-flight crowd profile |
 
 ## F. Passenger screen simulator
 

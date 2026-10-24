@@ -15,7 +15,7 @@ from datetime import datetime
 # nosemgrep: gitlab.bandit.B313.B314.B315.B316.B318.B319.B320.B405.B406.B407.B408.B409.B410, gitlab.bandit.B314, python.lang.security.use-defused-xml.use-defused-xml
 from xml.etree import ElementTree
 
-from ..models import Flight, FlightEvent, iso, parse_time
+from ..models import Flight, FlightEvent, iso
 from .base import (
     AdapterError,
     children_named,

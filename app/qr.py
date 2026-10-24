@@ -7,8 +7,6 @@ SVG rendering.  No network call and no third-party package is involved.
 
 from __future__ import annotations
 
-import math
-
 VERSIONS = {
     1: {"total": 26, "data": 19, "blocks": 1, "data_per_block": 19, "ec_per_block": 7},
     2: {"total": 44, "data": 34, "blocks": 1, "data_per_block": 34, "ec_per_block": 10},

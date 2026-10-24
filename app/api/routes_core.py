@@ -108,7 +108,10 @@ def _sim_state(req: Request) -> Response:
 def _sim_control(req: Request) -> Response:
     action = body_str(req.body, "action", "pause", 30)
     value = req.body.get("value")
-    result = req.sim.control(action, value)
+    try:
+        result = req.sim.control(action, value)
+    except ValueError as exc:
+        return json_response({"error": "invalid_event", "message": str(exc)}, status=400)
     return json_response({"ok": True, "state": result, "action": action})
 
 

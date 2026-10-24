@@ -11,8 +11,7 @@ import argparse
 import csv
 import json
 import random
-from datetime import datetime, time, timedelta, timezone
-from pathlib import Path
+from datetime import datetime, timedelta, timezone
 
 from . import db
 from .adapters.acris import build_entities

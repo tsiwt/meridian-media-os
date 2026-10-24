@@ -8,7 +8,7 @@ from ..domain import decisions
 from ..domain.profile import zone_presence
 from ..models import iso, parse_time
 from . import serializers
-from .http import Request, Response, Route, body_bool, body_int, body_str, dispatch, json_response, q_int, q_str
+from .http import Request, Response, Route, body_int, body_str, dispatch, json_response, q_int, q_str
 from .metrics import metrics
 
 
@@ -290,6 +290,7 @@ def _update_target(entity: str) -> tuple[str, list[str]]:
         "outlets": ("outlets", ["name", "zone_id", "category", "stock_status"]),
         "airlines": ("airlines", ["name", "icao", "market", "color"]),
         "screens": ("screens", ["name", "zone_id", "status", "latency_ms", "aspect"]),
+        "locations": ("zones", ["name", "terminal_id", "kind", "concourse", "gates_json", "x", "y", "w", "h"]),
     }.get(entity, ("", []))
 
 

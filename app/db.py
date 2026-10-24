@@ -164,13 +164,3 @@ def table_count(table: str) -> int:
     return int(row["c"]) if row else 0
 
 
-def reset_database() -> None:
-    """Remove the database file and all WAL companions (seed/tests only)."""
-    for suffix in ("", "-wal", "-shm"):
-        path = Path(str(settings.db_path) + suffix)
-        if path.exists():
-            try:
-                path.unlink()
-            except PermissionError:
-                pass
-    close_thread_connection()

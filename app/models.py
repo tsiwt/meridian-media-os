@@ -178,17 +178,6 @@ class QueueMeasurement:
 
 
 @dataclass
-class ScreenState:
-    screen_id: str
-    name: str
-    zone_id: str
-    status: str
-    latency_ms: int
-    last_seen: datetime
-    aspect: str = "16:9"
-
-
-@dataclass
 class EvidencePoint:
     label: str
     source: str
@@ -352,6 +341,3 @@ class QueueSource(Protocol):
         """Yield canonical queue measurements."""
 
 
-class InfrastructureSource(Protocol):
-    def zones(self) -> Iterable[dict[str, Any]]:
-        """Yield canonical terminal/zone/checkpoint records."""

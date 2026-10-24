@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import threading
+import time
 from collections import deque
 from statistics import median
 
@@ -15,6 +16,7 @@ class Metrics:
         self.error_count = 0
         self.last_cycle_ms = 0.0
         self.last_cycle_at = ""
+        self.process_started = time.time()
 
     def record(self, milliseconds: float) -> None:
         with self._lock:
@@ -50,7 +52,9 @@ class Metrics:
             "p99Ms": self.percentile(99),
             "playlistBuildMs": self.last_cycle_ms,
             "playlistBuildAt": self.last_cycle_at,
+            "uptimeSeconds": int(time.time() - self.process_started),
             "uptimePct7d": 99.98,
+            "uptimeIsSimulated": True,
         }
 
 

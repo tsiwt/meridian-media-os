@@ -14,7 +14,7 @@ from .. import db
 from ..config import Settings
 from ..models import Candidate, CrowdProfile, Decision, iso, parse_time
 from . import scoring
-from .ai import MockAIProvider, build_provider
+from .ai import build_provider
 from .profile import build_profile, screen_context
 
 TRUSTED_SOURCES = {"AODB", "IATA AIDX", "ACRIS", "AODB feed status", "Platform screen telemetry", "Platform"}

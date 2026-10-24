@@ -3,7 +3,7 @@ import {
   clear, debounce, fmtCompact, fmtDate, fmtMoney, fmtNumber, fmtPct, fmtTime,
   h, icon, modal, statusBadge, titleCase, toast,
 } from "../dom.js";
-import { lineChart } from "../components/charts.js";
+import { lineChart, profileBars } from "../components/charts.js";
 
 const TABS = [
   ["overview", "Overview"],
@@ -124,6 +124,24 @@ function renderOverview(ctx, root, summary, messages) {
     h("button", { class: "btn small", style: { marginTop: "10px" }, onClick: () => { ctx.ui.tab = "messages"; ctx.rerender(); } }, icon("plus", 12), " Schedule message")
   );
   root.appendChild(h("div", { class: "grid grid-3", style: { marginTop: "16px" } }, timeline, campaigns));
+  root.appendChild(h("div", { class: "grid grid-2", style: { marginTop: "16px" } },
+    h("div", { class: "card" },
+      h("div", { class: "card-head" },
+        h("div", { class: "card-title", text: "Own-flight crowd profile" }),
+        h("span", { class: "badge teal", text: `${summary.crowdProfile?.crowd || 0} pax in window` })
+      ),
+      profileBars(summary.crowdProfile || {}, 8),
+      h("p", { class: "hint", style: { marginTop: "8px" }, text: "Aggregated by flight and zone only; no passenger-level data." })
+    ),
+    h("div", { class: "card" },
+      h("div", { class: "card-head" }, h("div", { class: "card-title", text: "Top destinations & nationalities" }), h("span", { class: "badge grey", text: "own flights" })),
+      h("div", { class: "chip-row" },
+        ...(summary.crowdProfile?.topDestinations || []).map((item) => h("span", { class: "chip" }, h("strong", { text: item.code }), ` ${Math.round((item.share || 0) * 100)}%`)),
+        ...(summary.crowdProfile?.nationalities || []).map((item) => h("span", { class: "chip" }, `Nationality ${item.code} · ${Math.round((item.share || 0) * 100)}%`))
+      ),
+      h("p", { class: "hint", style: { marginTop: "8px" }, text: "Use this profile to choose upgrade, lounge or co-brand offers for your own passengers." })
+    )
+  ));
   root.appendChild(h("div", { class: "grid grid-2", style: { marginTop: "16px" } },
     h("div", { class: "card" },
       h("div", { class: "card-head" }, h("div", { class: "card-title", text: "Delay goodwill" }), h("span", { class: "badge green", text: "automation on" })),

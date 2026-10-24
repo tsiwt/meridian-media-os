@@ -7,10 +7,10 @@ from datetime import timedelta
 from .. import db
 from ..domain import decisions
 from ..domain.promos import create as create_promo
-from ..domain.promos import get_by_code, present, promo_for_campaign
-from ..models import iso, parse_time
+from ..domain.promos import promo_for_campaign
+from ..models import iso
 from . import serializers
-from .http import Request, Response, Route, dispatch, json_response, q_str
+from .http import Request, Response, Route, dispatch, json_response
 
 
 def _screens(req: Request) -> Response:

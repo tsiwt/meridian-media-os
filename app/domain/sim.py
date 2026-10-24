@@ -509,24 +509,33 @@ class Simulation:
         self.zone_presence[row["id"]] = zone_presence(row["id"], now)
 
     # -- incidents & feeds -------------------------------------------------
-    def _raise_incident(self, kind: str, severity: str, title: str, message: str, meta: dict) -> None:
+    def _raise_incident(
+        self,
+        kind: str,
+        severity: str,
+        title: str,
+        message: str,
+        meta: dict,
+        owner: str = "ops@mqi.example",
+    ) -> None:
         now = self.now
-        existing = db.query_one(
-            "SELECT id FROM incidents WHERE kind = ? AND status != 'resolved' AND meta_json LIKE ?",
-            (kind, f"%{meta.get('screenId', '')}%") if meta.get("screenId") else (kind, "%"),
-        )
-        if existing and meta.get("screenId"):
-            return
+        key = meta.get("screenId") or meta.get("feed") or meta.get("campaignId") or ""
+        if key:
+            existing = db.query_one(
+                "SELECT id FROM incidents WHERE kind = ? AND status != 'resolved' AND meta_json LIKE ?",
+                (kind, f"%{key}%"),
+            )
+            if existing:
+                return
         db.execute(
             "INSERT INTO incidents(kind, severity, owner, status, title, message, created, updated, meta_json) "
             "VALUES (?,?,?,?,?,?,?,?,?)",
-            (kind, severity, "ops@mqi.example", "open", title, message, iso(now), iso(now), db.json_dumps(meta)),
+            (kind, severity, owner, "open", title, message, iso(now), iso(now), db.json_dumps(meta)),
         )
         self.bus.publish("incident", {"kind": kind, "severity": severity, "title": title})
 
     def _check_incidents(self, now: datetime) -> None:
-        rows = db.query("SELECT id, status, last_seen FROM screens WHERE status = 'offline'")
-        for row in rows:
+        for row in db.query("SELECT id, status, last_seen FROM screens WHERE status = 'offline'"):
             last_seen = parse_time(row["last_seen"])
             if last_seen and (now - last_seen).total_seconds() >= 300:
                 self._raise_incident(
@@ -534,13 +543,36 @@ class Simulation:
                     "No heartbeat for more than 5 minutes. Playlist paused; fallback poster active.",
                     {"screenId": row["id"]},
                 )
-        resolved = db.query(
-            "SELECT i.id, i.meta_json FROM incidents i WHERE i.kind='screen_offline' AND i.status!='resolved'"
+        for row in db.query("SELECT id, status, last_seen FROM screens WHERE status = 'degraded'"):
+            last_seen = parse_time(row["last_seen"])
+            if last_seen and (now - last_seen).total_seconds() >= 300:
+                self._raise_incident(
+                    "creative_failure", "medium", f"Creative render degraded on {row['id']}",
+                    "Playlist fallback active after repeated creative render failures.",
+                    {"screenId": row["id"]}, owner="media@mqi.example",
+                )
+        for feed, label in (("aodb", "AODB"), ("aidx", "AIDX"), ("acris", "ACRIS")):
+            last = parse_time(db.get_meta(f"feed_last_{feed}"))
+            if last and (now - last).total_seconds() >= 180:
+                lag = int((now - last).total_seconds())
+                self._raise_incident(
+                    "feed_lag", "medium", f"{label} feed lag {lag}s",
+                    f"No {label} message for {lag}s. Decisions will reject stale evidence and fall back.",
+                    {"feed": feed}, owner="platform@mqi.example",
+                )
+        active = db.query(
+            "SELECT id, kind, meta_json FROM incidents "
+            "WHERE status != 'resolved' AND kind IN ('screen_offline','creative_failure','feed_lag')"
         )
-        for incident in resolved:
+        for incident in active:
             meta = db.json_loads(incident["meta_json"], {})
-            screen = db.query_one("SELECT status FROM screens WHERE id = ?", (meta.get("screenId"),))
-            if screen and screen["status"] == "online":
+            if incident["kind"] == "feed_lag":
+                last = parse_time(db.get_meta(f"feed_last_{meta.get('feed', '')}"))
+                healthy = bool(last and (now - last).total_seconds() < 180)
+            else:
+                screen = db.query_one("SELECT status FROM screens WHERE id = ?", (meta.get("screenId"),))
+                healthy = bool(screen and screen["status"] == "online")
+            if healthy:
                 db.execute(
                     "UPDATE incidents SET status='resolved', updated=? WHERE id=?",
                     (iso(now), incident["id"]),

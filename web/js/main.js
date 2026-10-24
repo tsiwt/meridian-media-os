@@ -155,7 +155,7 @@ function buildTopbar() {
   const bar = document.getElementById("topbar");
   clear(bar);
   dom.brand = h("a", { class: "brand", href: "#/admin", style: { color: "inherit" } },
-    h("div", { class: "brand-mark", text: "M" }),
+    h("div", { class: "brand-mark", text: state.config.theme.logo || "M" }),
     h("div", {},
       h("div", { class: "brand-name", text: state.config.theme.productName }),
       h("div", { class: "brand-sub", text: `${state.config.theme.airportCode} · ${state.config.theme.challenge}` })

@@ -203,9 +203,3 @@ def _confidence(
     return round(max(0.2, min(0.96, 0.35 + 0.4 * freshness + 0.2 * coverage)), 3)
 
 
-def parse_queue(row: dict | None) -> dict | None:
-    return dict(row) if row else None
-
-
-def _iso(value: datetime) -> str:
-    return value.astimezone().isoformat().replace("+00:00", "Z") if value.tzinfo else value.isoformat() + "Z"

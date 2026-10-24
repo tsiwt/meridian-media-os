@@ -9,9 +9,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 OUTPUT = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT.parent / "meridian-media-os-dp1024-submission.zip"
 TOP = "meridian-media-os"
-INCLUDE = ["app", "web", "docs", "samples", "tests", "tools"]
+INCLUDE = ["app", "web", "docs", "samples", "tests", "tools", ".github"]
 ROOT_FILES = [
-    "README.md", "Dockerfile", "docker-compose.yml", ".env.example",
+    "README.md", "Dockerfile", "docker-compose.yml", "render.yaml", ".env.example",
     ".gitignore", ".dockerignore",
 ]
 BLOCKED = {".db", ".db-wal", ".db-shm", ".pyc", ".log", ".zip", ".swp"}
