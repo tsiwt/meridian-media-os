@@ -16,6 +16,8 @@ services:
         value: "2026-10-24T13:55:00Z"
       - key: SIM_SPEED
         value: "1"
+      - key: DECISION_INTERVAL
+        value: "120"
       - key: SIM_AUTOPLAY
         value: "1"
       - key: SECOND_LANGUAGE

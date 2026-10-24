@@ -63,11 +63,9 @@ def _force_decision(req: Request) -> Response:
 def _ensure_decision(screen_id: str, req: Request) -> dict | None:
     latest = decisions.latest_decision(screen_id)
     if latest:
-        decided = parse_time(latest.get("decidedAt"))
-        if decided and abs((req.now - decided).total_seconds()) <= 30:
-            return latest
+        return latest
     decision = decisions.decide(screen_id, req.now, req.settings, persist=True)
-    return decision.to_dict(req.now) if decision else latest
+    return decision.to_dict(req.now) if decision else None
 
 
 def _payload(screen, decision: dict, req: Request) -> dict:
