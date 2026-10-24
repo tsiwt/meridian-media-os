@@ -99,7 +99,7 @@ class Settings:
     lan_ip: str = field(default_factory=detect_lan_ip)
     decision_interval_sim_seconds: int = field(
         default_factory=lambda: _env_int(
-            "DECISION_INTERVAL", 120 if _env("RENDER", "") else 15
+            "DECISION_INTERVAL", 120 if (_env("RENDER", "") or _env("RENDER_EXTERNAL_HOSTNAME", "") or _env("RENDER_EXTERNAL_URL", "")) else 15
         )
     )
     presence_window_minutes: int = field(default_factory=lambda: _env_int("PRESENCE_WINDOW", 30))
